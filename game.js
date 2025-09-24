@@ -1,6 +1,6 @@
 // Game data: each step has text, an image, and 4 choices (with feedback and images)
 // All images are currently placeholders, insert the actual images in the assets folder and update the file paths accordingly
-
+// Use image links if possible
 // Use backticks (next to the 1 key) for convenience, or else the text has to be in one long line or in a different format
 // Text will be started in a new line because of the css, so if you want a new line just press enter, the text displayed will follow
 const story = [
