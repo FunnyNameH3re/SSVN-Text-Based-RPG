@@ -169,7 +169,7 @@ const scenarios = {
       }
     ]
   },
-  "URL Test": {
+  "url-test": {
     steps: [
       {
         text: `Testing whether the URL Works`,
@@ -179,6 +179,7 @@ const scenarios = {
             text: `Nothin to see here`,
             correct: true,
             feedback: `Yay you did it`,
+            buttonImage: `assets/treasure.png`,
             feedbackImage: `assets/bobby.png`,
           }
         ]
