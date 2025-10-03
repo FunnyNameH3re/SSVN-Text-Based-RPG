@@ -191,9 +191,17 @@ const scenarios = {
 // Get the scenario from the URL (default to "family-panic")
 const urlParams = new URLSearchParams(window.location.search);
 const scenarioId = urlParams.get("scenario") || "family-panic";
+console.log("Scenario ID:", scenarioId); // Debug: Log the scenario ID
+console.log("Scenarios:", scenarios); // Debug: Log all scenarios
 
 // Load the selected scenario
 const currentScenario = scenarios[scenarioId];
+if (!currentScenario) {
+  console.error("Scenario not found:", scenarioId);
+  document.getElementById("storyText").textContent = "Error: Scenario not found!";
+  throw new Error("Scenario not found");
+}
+
 let currentStep = 0;
 
 // DOM elements
@@ -207,6 +215,12 @@ const continueButton = document.getElementById("continueButton");
 
 // Display the current step
 function showStep(step) {
+  if (!currentScenario || !currentScenario.steps || step >= currentScenario.steps.length) {
+    console.error("Invalid step or scenario:", step, currentScenario);
+    storyText.textContent = "Error: Invalid step or scenario!";
+    return;
+  }
+
   const data = currentScenario.steps[step];
   storyText.textContent = data.text;
   sceneImage.src = data.image;
@@ -218,60 +232,60 @@ function showStep(step) {
     const btn = document.createElement("button");
     btn.classList.add("choiceButton");
 
-    // Create a container for the image and text
     const contentContainer = document.createElement("div");
     contentContainer.classList.add("button-content");
 
-    // Add image to the container
     const img = document.createElement("img");
     img.src = choice.buttonImage || "assets/default_button_image.png";
     img.alt = choice.text;
     contentContainer.appendChild(img);
 
-    // Add text to the container
     const text = document.createElement("span");
     text.textContent = choice.text;
     contentContainer.appendChild(text);
 
-    // Append the container to the button
     btn.appendChild(contentContainer);
 
     btn.dataset.index = index;
     btn.dataset.correct = choice.correct;
     btn.dataset.feedback = choice.feedback;
     btn.dataset.feedbackImage = choice.feedbackImage;
-    btn.onclick = () => handleChoice(index, choice.correct, choice.feedback, choice.feedbackImage);
+    btn.onclick = () => handleChoice(choice);
     choicesDiv.appendChild(btn);
   });
 }
 
 // Handle player choice
-function handleChoice(selectedIndex, isCorrect, feedback, feedbackImagePath) {
+function handleChoice(choice) {
+  const { correct, feedback, feedbackImage: feedbackImagePath } = choice;
   const buttons = choicesDiv.querySelectorAll(".choiceButton");
 
-  // Show feedback for the selected option
+  // Show feedback for the selected choice
   feedbackDiv.classList.remove("hidden");
   feedbackImage.src = feedbackImagePath;
   feedbackText.textContent = feedback;
-  feedbackDiv.className = isCorrect ? "correct" : "bobby";
+  feedbackDiv.className = correct ? "correct" : "bobby";
 
-  if (isCorrect) {
+  if (correct) {
     // Highlight the correct button
-    buttons[selectedIndex].classList.add("correct-choice");
     buttons.forEach(button => {
-      if (button.dataset.correct !== "true") {
-        button.onclick = () => {
-          feedbackImage.src = button.dataset.feedbackImage;
-          feedbackText.textContent = button.dataset.feedback;
-          feedbackDiv.className = "bobby";
-        };
+      if (button.dataset.correct === "true") {
+        button.classList.add("correct-choice");
       }
+      // Allow clicking on all buttons to show their feedback
+      button.onclick = () => {
+        feedbackImage.src = button.dataset.feedbackImage;
+        feedbackText.textContent = button.dataset.feedback;
+        feedbackDiv.className = button.dataset.correct === "true" ? "correct" : "bobby";
+      };
+      // Remove the "fully-disabled" class if it exists
+      button.classList.remove("fully-disabled");
     });
 
-    // Show the continue button with styling
-    continueButton.classList.remove("hidden");
+    // Show the "Continue" button
+    continueButton.classList.remove("hidden", "retry");
+    continueButton.classList.add("continue");
     continueButton.textContent = "Continue";
-    continueButton.className = "choiceButton"; // Use the same styling as option buttons
     continueButton.onclick = () => {
       currentStep++;
       if (currentStep < currentScenario.steps.length) {
@@ -285,20 +299,20 @@ function handleChoice(selectedIndex, isCorrect, feedback, feedbackImagePath) {
       }
     };
   } else {
-    // Disable all buttons except "Retry"
+    // Fully disable all buttons and show "Retry"
     buttons.forEach(button => {
-      button.disabled = true;
+      button.classList.add("fully-disabled");
+      button.onclick = null; // Remove click handlers
     });
-
-    // Show the retry button with styling
-    continueButton.classList.remove("hidden");
+    continueButton.classList.remove("hidden", "continue");
+    continueButton.classList.add("retry");
     continueButton.textContent = "Retry";
-    continueButton.className = "choiceButton retry"; // Use the same styling as option buttons
     continueButton.onclick = () => {
       showStep(currentStep);
     };
   }
 }
+
 
 // Start the game
 showStep(currentStep);
